@@ -1,0 +1,4 @@
+---
+- include: hardening_password.yml
+- include: hardening_sshd.yml
+- include: hardening_ossecurity.yml

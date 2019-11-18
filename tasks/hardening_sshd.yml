@@ -1,0 +1,54 @@
+- name: HARDENING | SSHD | Copy etc--issue to apply login banner
+  copy:
+    src:  etc--issue
+    dest: /etc/issue
+    owner: root
+    group: root
+    mode: 0644
+
+- name: HARDENING | SSHD | sshd configuration
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: "{{ item.reg }}"
+    line: "{{ item.line }}"
+    state: present
+    validate: '/usr/sbin/sshd -T -f %s'
+  with_items:
+    - { reg: '^(#)?PasswordAuthentication', line: 'PasswordAuthentication yes'}
+    # V-38613 - The ssh daemon must not permit root logins
+    - { reg: '^(#)?PermitRootLogin', line: 'PermitRootLogin no'}
+    - { reg: '^(#)?AllowTcpForwarding', line: 'AllowTcpForwarding no'}
+    - { reg: '^(#)?Compression', line: 'Compression no'}
+    - { reg: '^(#)?LogLevel', line: 'LogLevel VERBOSE'}
+    - { reg: '^(#)?MaxAuthTries', line: 'MaxAuthTries 1'}
+    - { reg: '^(#)?MaxSessions', line: 'MaxSessions 3'}
+    - { reg: '^(#)?TCPKeepAlive', line: 'TCPKeepAlive no'}
+    - { reg: '^(#)?UsePrivilegeSeparation', line: 'UsePrivilegeSeparation SANDBOX'}
+    - { reg: '^(#)?X11Forwarding', line: 'X11Forwarding no'}
+    # V-38607 - The SSH daemon must be configured to use only the SSHv2 protocol
+    - { reg: '^(#)?PrintLastLog', line: 'PrintLastLog yes'}
+    # V-38607 - The SSH daemon must be configured to use only the SSHv2 protocol
+    - { reg: '^(#)?Protocol \d', line: 'Protocol 2'}
+    # V-38614 - The SSH daemon must not allow authentication using an empty password
+    - { reg: '^(#)?PermitEmptyPasswords', line: 'PermitEmptyPasswords no'}
+    # V-38612 - The SSH daemon must not allow host-based authentication
+    - { reg: '^(#)?HostbasedAuthentication', line: 'HostbasedAuthentication no'}
+    # V-38608 - Set a timeout interval for idle ssh sessions
+    - { reg: '^(#)?ClientAliveInterval', line: 'ClientAliveInterval 300'}
+    # V-38610 - Set a timeout count on idle ssh sessions
+    # OpenSCAP report - CCP profile suggested value of 0
+    - { reg: '^(#)?ClientAliveCountMax', line: 'ClientAliveCountMax 0'}
+    # V-38611 - The sshd daemon must ignore .rhosts files
+    - { reg: '^(#)?IgnoreRhosts', line: 'IgnoreRhosts yes'}
+    # V-38616 - The ssh daemon must not permit user environment settings
+    - { reg: '^(#)?PermitUserEnvironment', line: 'PermitUserEnvironment no'}
+    # V-38617 - The ssh daemon must be configured to use approved ciphers
+    - { reg: '^(#)?KexAlgorithms', line: 'KexAlgorithms curve25519-sha256@libssh.org,ecdh-sha2-nistp521,ecdh-sha2-nistp384,ecdh-sha2-nistp256,diffie-hellman-group-exchange-sha256'}
+    - { reg: '^(#)?Ciphers', line: 'Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr'}
+    - { reg: '^(#)?MACs', line: 'MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256,umac-128@openssh.com'}
+    # OpenSCAP report - CCP profile suggested referencing warning banner
+    - { reg: '^(#)?Banner', line: 'Banner /etc/issue'}
+    # Suggested by lynis audit
+    - { reg: '^(#)?UseDNS', line: 'UseDNS no'}
+    - { reg: '^(#)?AllowAgentForwarding', line: 'AllowAgentForwarding no'}
+  notify: restart_ssh

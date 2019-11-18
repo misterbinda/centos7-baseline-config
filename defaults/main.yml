@@ -1,0 +1,2 @@
+path_pam_system_auth: /etc/pam.d/system-auth
+path_pam_password_auth: /etc/pam.d/system-auth

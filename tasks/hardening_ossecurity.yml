@@ -1,0 +1,7 @@
+- name: HARDENING | LOGINTIMEOUT | Copy os-security.yml to apply login auto timeout
+  copy:
+    src:  profile.d--os-security.sh
+    dest: /etc/profile.d/os-security.sh
+    owner: root
+    group: root
+    mode: 0644
